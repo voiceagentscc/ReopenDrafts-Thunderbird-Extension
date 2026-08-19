@@ -1,0 +1,22 @@
+:root { color-scheme: light dark; font: message-box; }
+body { margin: 0; min-width: 22rem; }
+main { padding: 1rem; }
+.popup main { max-height: 36rem; overflow: auto; }
+.options { max-width: 48rem; margin: 1rem auto; }
+h1 { font-size: 1.2rem; margin-top: 0; }
+h2 { font-size: 1rem; margin: 1rem 0 .25rem; }
+fieldset { display: grid; gap: .35rem; margin: .75rem 0; }
+label { display: block; }
+ul { margin: .2rem 0; padding-left: 1.4rem; }
+.buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.danger { color: #a40000; }
+.toggle { margin: .75rem 0; }
+.path { margin: .75rem 0; }
+.path input { box-sizing: border-box; display: block; margin-top: .25rem; width: 100%; }
+.hint { margin: -.5rem 0 .75rem; opacity: .75; }
+.session-hint { margin: .25rem 0 .75rem; }
+.major-separator { border: 0; border-top: 3px double currentColor; margin: 1.5rem 0 1rem; opacity: .45; }
+.debugging { margin: 0 0 1rem; }
+.debugging summary { cursor: pointer; font-size: 1rem; font-weight: 600; }
+.debugging[open] summary { margin-bottom: .75rem; }
+.indented { margin-inline-start: 1.5rem; }

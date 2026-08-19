@@ -1,0 +1,12 @@
+dist/
+
+# Local development history and artwork source packs are intentionally not part
+# of the public release branch.
+worklog.md
+docs/release-practices.md
+docs/user-tasks.md
+bug-report.md
+Reopen-Drafts-*.zip
+Reopen-Drafts-*/
+Beer *.png
+Wind *.png

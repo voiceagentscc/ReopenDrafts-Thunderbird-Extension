@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extensionName__",
+  "short_name": "__MSG_extensionShortName__",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
+  "version": "0.2.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "reopen-one-existing-draft-stage1@example.invalid",
+      "strict_min_version": "153.0",
+      "strict_max_version": "153.*"
+    }
+  },
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "__MSG_extensionName__",
+    "default_popup": "popup.html",
+    "default_label": "__MSG_extensionName__",
+    "default_icon": {
+      "16": "assets/icons/beer/beer-2-16.png",
+      "32": "assets/icons/beer/beer-2-32.png",
+      "48": "assets/icons/beer/beer-2-48.png",
+      "64": "assets/icons/beer/beer-2-64.png",
+      "98": "assets/icons/beer/beer-2-98.png",
+      "128": "assets/icons/beer/beer-2-128.png"
+    },
+    "allowed_spaces": ["mail"],
+    "default_windows": ["normal"]
+  },
+  "icons": {
+    "16": "assets/icons/beer/beer-2-16.png",
+    "32": "assets/icons/beer/beer-2-32.png",
+    "48": "assets/icons/beer/beer-2-48.png",
+    "64": "assets/icons/beer/beer-2-64.png",
+    "98": "assets/icons/beer/beer-2-98.png",
+    "128": "assets/icons/beer/beer-2-128.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true,
+    "browser_style": true
+  },
+  "commands": {
+    "restore-previous-compose-session": {
+      "description": "__MSG_restorePreviousComposeSession__"
+    },
+    "forget-previous-compose-session": {
+      "description": "__MSG_forgetPreviousComposeSession__"
+    }
+  },
+  "permissions": [
+    "storage",
+    "compose",
+    "messagesRead",
+    "accountsRead"
+  ],
+  "experiment_apis": {
+    "existingDraft": {
+      "schema": "experiment/schema.json",
+      "parent": {
+        "scopes": ["addon_parent"],
+        "paths": [["existingDraft"]],
+        "script": "experiment/implementation.js"
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "extensionName": {
+    "message": "Reopen Drafts",
+    "description": "Name shown in Thunderbird's Add-ons Manager and toolbar."
+  },
+  "extensionShortName": {
+    "message": "Reopen Drafts",
+    "description": "Short extension name for constrained Thunderbird UI surfaces."
+  },
+  "extensionDescription": {
+    "message": "Restore the drafts and Browser Console that belonged to the prior Thunderbird session.",
+    "description": "Description shown in Thunderbird's Add-ons Manager."
+  },
+  "restorePreviousComposeSession": {
+    "message": "Restore previously open drafts",
+    "description": "Command description for restoring the saved compose session."
+  },
+  "forgetPreviousComposeSession": {
+    "message": "Forget the previously open compose session",
+    "description": "Command description for clearing the saved compose session."
+  }
+}

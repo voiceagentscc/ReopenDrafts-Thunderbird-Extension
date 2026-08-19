@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en-US">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="ui.css"><title>Reopen Drafts settings</title></head>
+  <body>
+    <main class="options">
+      <h1>Reopen Drafts</h1>
+      <p>Thunderbird keeps the drafts themselves. Reopen Drafts stores draft identifiers, a display-only subject snapshot, compose-session state, and window geometry. It does not store message bodies, recipients, or attachments.</p>
+      <fieldset><legend>Restore previously open drafts at startup</legend><label><input type="radio" name="draftRestore" value="always"> Always — reopen every resolvable draft</label><label><input type="radio" name="draftRestore" value="never"> Never — retain the session for manual restore</label><label><input type="radio" name="draftRestore" value="ask"> Ask — show the account-grouped draft list</label></fieldset>
+      <label class="toggle"><input id="toolbar-visible" type="checkbox"> Show Reopen Drafts in Thunderbird's top toolbar</label><p class="hint">When hidden, use this options page to show it again.</p>
+      <fieldset><legend>Toolbar icon</legend><label><input type="radio" name="toolbarIcon" value="beer"> Beer</label><label><input type="radio" name="toolbarIcon" value="window"> Window</label></fieldset>
+      <hr>
+      <h2>Drafts available to restore</h2><p class="hint session-hint">This list is updated while you work. It contains drafts that were open in the recorded compose session, including drafts you deferred at startup.</p><section id="drafts" aria-live="polite"></section><p id="empty" hidden>No saved drafts are waiting to be restored.</p>
+      <div class="buttons"><button id="restore-selected">Restore selected</button><button id="restore-all">Restore all</button><button id="forget" class="danger">Forget session</button></div>
+      <hr class="major-separator">
+      <details class="debugging">
+        <summary>Debugging</summary>
+        <fieldset><legend>Open Browser Console at startup</legend><label><input type="radio" name="browserConsoleRestore" value="always"> Always</label><label><input type="radio" name="browserConsoleRestore" value="never"> Never</label><label><input type="radio" name="browserConsoleRestore" value="if-open"> If it was open</label></fieldset>
+        <label class="toggle"><input id="preserve" type="checkbox"> Preserve tracked drafts and Browser Console when the main Thunderbird window closes</label>
+        <label class="toggle"><input id="restore-position" name="restorePosition" type="checkbox"> Restore to previous position</label>
+        <label class="toggle"><input id="restore-size" name="restoreSize" type="checkbox"> Restore to previous size</label>
+        <label class="toggle"><input id="log-to-file" type="checkbox"> Log to file</label>
+        <label class="path indented">Log file path<input id="log-file-path" type="text" spellcheck="false"></label>
+      </details>
+    </main>
+    <script type="module" src="ui.js"></script>
+  </body>
+</html>

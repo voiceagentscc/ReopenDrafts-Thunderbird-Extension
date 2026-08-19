@@ -1,0 +1,12 @@
+{
+  "name": "thunderbird-reopen-drafts",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check background.js && node --check experiment/implementation.js && npm test && node tests/static-check.mjs",
+    "package": "rm -f dist/reopen-drafts.xpi && mkdir -p dist && zip -q -r dist/reopen-drafts.xpi manifest.json background.js session-state.js popup.html toolbar.js toolbar-hidden.html toolbar-hidden.js options.html ui.js ask.html ask.js ui.css assets experiment _locales README.md LICENSE NOTICE docs/issues.md",
+    "audit:public": "node scripts/audit-public-release.mjs"
+  }
+}

@@ -1,0 +1,107 @@
+[
+  {
+    "namespace": "existingDraft",
+    "description": "Minimal privileged bridge for existing drafts and the Thunderbird Browser Console.",
+    "functions": [
+      {
+        "name": "openExistingDraft",
+        "type": "function",
+        "async": true,
+        "parameters": [{ "name": "messageId", "type": "integer" }],
+        "returns": { "type": "boolean" }
+      },
+      {
+        "name": "openDurableDraft",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "folderId", "type": "string" },
+          { "name": "headerMessageId", "type": "string" }
+        ],
+        "returns": {
+          "type": "object",
+          "properties": {
+            "status": { "type": "string" },
+            "reason": { "type": "string", "optional": true }
+          }
+        }
+      },
+      {
+        "name": "getMainWindowIds",
+        "type": "function",
+        "async": true,
+        "parameters": [],
+        "returns": { "type": "array", "items": { "type": "integer" } }
+      },
+      {
+        "name": "getBrowserConsole",
+        "type": "function",
+        "async": true,
+        "parameters": [],
+        "returns": {
+          "type": "object",
+          "properties": {
+            "open": { "type": "boolean" },
+            "left": { "type": "integer", "optional": true }, "top": { "type": "integer", "optional": true },
+            "width": { "type": "integer", "optional": true }, "height": { "type": "integer", "optional": true },
+            "state": { "type": "string", "optional": true }
+          }
+        }
+      },
+      {
+        "name": "listOpenComposeDrafts",
+        "type": "function",
+        "async": true,
+        "parameters": [],
+        "returns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "message": { "$ref": "messages.MessageHeader" },
+              "tabId": { "type": "integer" },
+              "windowId": { "type": "integer" }
+            }
+          }
+        }
+      },
+      {
+        "name": "setToolbarVisible",
+        "type": "function",
+        "async": true,
+        "parameters": [{ "name": "visible", "type": "boolean" }]
+      },
+      {
+        "name": "isApplicationQuitting",
+        "type": "function",
+        "async": true,
+        "parameters": [],
+        "returns": { "type": "boolean" }
+      },
+      {
+        "name": "openBrowserConsole",
+        "type": "function",
+        "async": true,
+        "parameters": [{ "name": "geometry", "type": "object", "optional": true,
+          "properties": { "left": { "type": "integer", "optional": true }, "top": { "type": "integer", "optional": true }, "width": { "type": "integer", "optional": true }, "height": { "type": "integer", "optional": true }, "state": { "type": "string", "optional": true } }
+        }]
+      },
+      {
+        "name": "appendLog",
+        "type": "function",
+        "async": true,
+        "parameters": [
+          { "name": "path", "type": "string" },
+          { "name": "line", "type": "string" }
+        ]
+      },
+      {
+        "name": "getDefaultLogFilePath",
+        "type": "function",
+        "async": true,
+        "parameters": [],
+        "returns": { "type": "string" }
+      }
+    ]
+  }
+]

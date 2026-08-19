@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en-US">
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="ui.css"><title>Reopen Drafts</title></head>
+  <body class="popup">
+    <main>
+      <h1>Reopen Drafts</h1>
+      <fieldset><legend>Restore drafts</legend><label><input type="radio" name="draftRestore" value="always"> Always</label><label><input type="radio" name="draftRestore" value="never"> Never</label><label><input type="radio" name="draftRestore" value="ask"> Ask</label></fieldset>
+      <label class="toggle"><input id="toolbar-visible" type="checkbox"> Show Reopen Drafts in the toolbar</label>
+      <p class="hint">When hidden, use the <a href="options.html" target="_blank">Reopen Drafts settings</a> page to show it again.</p>
+      <fieldset><legend>Toolbar icon</legend><label><input type="radio" name="toolbarIcon" value="beer"> Beer</label><label><input type="radio" name="toolbarIcon" value="window"> Window</label></fieldset>
+    </main>
+    <script type="module" src="toolbar.js"></script>
+  </body>
+</html>
