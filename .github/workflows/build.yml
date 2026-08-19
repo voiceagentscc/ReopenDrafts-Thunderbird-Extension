@@ -1,0 +1,41 @@
+name: Build Reopen Drafts
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate and package XPI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate extension
+        run: npm run check
+
+      - name: Package extension
+        run: npm run package
+
+      - name: Audit public package inputs
+        run: npm run audit:public
+
+      - name: Upload XPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reopen-drafts-xpi
+          path: dist/reopen-drafts.xpi
+          if-no-files-found: error
