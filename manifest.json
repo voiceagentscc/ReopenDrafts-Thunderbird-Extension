@@ -4,10 +4,10 @@
   "short_name": "__MSG_extensionShortName__",
   "description": "__MSG_extensionDescription__",
   "default_locale": "en",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "browser_specific_settings": {
     "gecko": {
-      "id": "reopen-one-existing-draft-stage1@example.invalid",
+      "id": "reopen-drafts@voiceagents.cc",
       "strict_min_version": "153.0",
       "strict_max_version": "153.*"
     }
