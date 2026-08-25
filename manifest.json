@@ -4,10 +4,10 @@
   "short_name": "__MSG_extensionShortName__",
   "description": "__MSG_extensionDescription__",
   "default_locale": "en",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "browser_specific_settings": {
     "gecko": {
-      "id": "reopen-drafts@voiceagents.cc",
+      "id": "ken@kenbeal.com",
       "strict_min_version": "153.0",
       "strict_max_version": "153.*"
     }
