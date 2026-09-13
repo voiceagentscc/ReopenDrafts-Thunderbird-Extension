@@ -4,7 +4,7 @@
   "short_name": "__MSG_extensionShortName__",
   "description": "__MSG_extensionDescription__",
   "default_locale": "en",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "browser_specific_settings": {
     "gecko": {
       "id": "ken@kenbeal.com",
