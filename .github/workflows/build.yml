@@ -101,27 +101,17 @@ jobs:
           # re-tag), and a non-force push would be rejected.
           git push --force origin "v${TAG_VERSION}"
 
-      # The build job packaged the XPI from the tag's original commit, whose
-      # version may have been stale (e.g. 0.3.2 when the tag says v0.4.0). The
-      # alignment step above may have rewritten package.json and manifest.json,
-      # so re-sync and re-package here to guarantee the XPI's internal manifest
-      # carries the tag's version. This step runs in its own shell (the
-      # alignment step's variables do not carry over), so it re-derives
-      # everything from the working tree rather than relying on a prior step.
-      # When the versions already agreed, the alignment step exited early and
-      # the tree is unchanged, so this re-package is a harmless no-op.
-      - name: Re-package XPI with aligned version
+      # The alignment step above rewrote package.json and manifest.json to the
+      # tag's version and committed that. The working tree now carries the
+      # correct version, so build the XPI directly from it — no need to
+      # download (and risk clobbering with a stale) artifact from the build
+      # job, which packaged the tag's original, pre-alignment commit.
+      - name: Package XPI with aligned version
         run: |
           set -e
-          echo "Re-syncing manifest.json and re-packaging so the XPI carries version ${GITHUB_REF_NAME#v}."
+          echo "Syncing manifest.json and packaging so the XPI carries version ${GITHUB_REF_NAME#v}."
           npm run sync-version
           npm run package
-
-      - name: Download XPI artifact
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          name: reopen-drafts-xpi
-          path: dist
 
       - name: Generate SHA256 checksum
         run: |
