@@ -17,15 +17,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
       - name: Validate extension
         run: npm run check
+
+      # Backstop for the pre-commit hook: re-sync manifest.json to package.json
+      # and warn (but do not fail) if the checked-in manifest was stale, e.g.
+      # because a commit was made with the hook bypassed. The package step below
+      # always zips a manifest that matches package.json.
+      - name: Sync manifest version (backstop)
+        run: |
+          if ! npm run sync-version -- --check; then
+            echo "::warning::Checked-in manifest.json was out of sync with package.json; re-synced it for this build. Run 'npm run setup' locally so the pre-commit hook keeps them in lockstep."
+            npm run sync-version
+          fi
 
       - name: Package extension
         run: npm run package
@@ -34,7 +45,7 @@ jobs:
         run: npm run audit:public
 
       - name: Upload XPI artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: reopen-drafts-xpi
           path: dist/reopen-drafts.xpi
@@ -48,8 +59,42 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea528caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      # The release tag is the single source of truth for a release's version.
+      # If it disagrees with package.json, correct package.json (and the derived
+      # manifest.json), commit the correction, and move the tag onto that commit
+      # so the tag always covers a tree whose version matches it.
+      - name: Align version with release tag
+        run: |
+          set -e
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          if [ "$TAG_VERSION" = "$PKG_VERSION" ]; then
+            echo "Tag v${TAG_VERSION} matches package.json; nothing to do."
+            exit 0
+          fi
+          echo "Tag v${TAG_VERSION} != package.json ${PKG_VERSION}; aligning package.json to the tag."
+          # Surgical single-line edit so the rest of package.json is untouched.
+          node -e "const f='package.json';const fs=require('fs');fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace(/(\"version\":\s*)\"[^\"]+\"/,\$1\"${TAG_VERSION}\"))"
+          npm run sync-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json manifest.json
+          git commit -m "Align version with release tag v${TAG_VERSION}"
+          git tag -f "v${TAG_VERSION}"
+          git push origin "v${TAG_VERSION}"
+
       - name: Download XPI artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: reopen-drafts-xpi
           path: dist
@@ -60,7 +105,7 @@ jobs:
           sha256sum reopen-drafts.xpi | awk '{print $1"  reopen-drafts.xpi"}' > reopen-drafts.xpi.sha256
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             dist/reopen-drafts.xpi
