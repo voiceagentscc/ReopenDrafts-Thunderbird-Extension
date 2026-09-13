@@ -84,7 +84,11 @@ jobs:
           fi
           echo "Tag v${TAG_VERSION} != package.json ${PKG_VERSION}; aligning package.json to the tag."
           # Surgical single-line edit so the rest of package.json is untouched.
-          node -e "const f='package.json';const fs=require('fs');fs.writeFileSync(f,fs.readFileSync(f,'utf8').replace(/(\"version\":\s*)\"[^\"]+\"/,\$1\"${TAG_VERSION}\"))"
+          # The shell string is single-quoted, so bash passes the JS verbatim:
+          # no \" escapes for YAML to strip, no bare " to break quoting, and
+          # $1 stays a literal regex backreference. The JSON quotes around the
+          # new version are built at runtime with String.fromCharCode(34).
+          node -e 'const f="package.json";const fs=require("fs");const q=String.fromCharCode(34);fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/("version":\s*)"[^"]+"/,"$1"+q+process.env.TAG_VERSION+q))'
           npm run sync-version
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
