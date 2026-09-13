@@ -107,15 +107,19 @@ jobs:
       # and re-package so the XPI's internal manifest carries the tag's version.
       # When the versions already agreed, the alignment step exited early and
       # this re-package is a harmless no-op (same inputs, same XPI).
+      #
+      # The test compares the tag's version against the ORIGINAL package.json
+      # version (captured before alignment rewrote it), not the current one —
+      # after alignment the two always match, which would never re-package.
       - name: Re-package XPI with aligned version
         run: |
           set -e
-          if [ "${GITHUB_REF_NAME#v}" != "$(node -p "require('./package.json').version")" ]; then
-            echo "package.json changed during alignment; re-syncing manifest and re-packaging."
+          if [ "${GITHUB_REF_NAME#v}" != "${PKG_VERSION}" ]; then
+            echo "package.json changed during alignment (${PKG_VERSION} -> ${GITHUB_REF_NAME#v}); re-syncing manifest and re-packaging."
             npm run sync-version
             npm run package
           else
-            echo "Version already aligned; keeping the XPI built by the build job."
+            echo "Version already aligned (${PKG_VERSION}); keeping the XPI built by the build job."
           fi
 
       - name: Download XPI artifact
