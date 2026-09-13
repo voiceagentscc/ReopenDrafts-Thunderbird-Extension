@@ -9,7 +9,7 @@ function create(tag, text = "") {
 }
 
 function render(model) {
-  for (const name of ["draftRestore", "browserConsoleRestore", "toolbarIcon"]) {
+  for (const name of ["draftRestore", "toolbarIcon"]) {
     const input = document.querySelector(`input[name="${name}"][value="${model.settings[name]}"]`);
     if (input) input.checked = true;
   }
@@ -54,7 +54,6 @@ async function saveSettings() {
     type: "set-settings",
     settings: {
       draftRestore: document.querySelector('input[name="draftRestore"]:checked').value,
-      browserConsoleRestore: document.querySelector('input[name="browserConsoleRestore"]:checked').value,
       preserveOnMainClose: $("#preserve").checked,
       toolbarVisible: $("#toolbar-visible").checked,
       toolbarIcon: document.querySelector('input[name="toolbarIcon"]:checked').value,
@@ -71,7 +70,7 @@ function logUiError(event, error) {
 }
 
 document.addEventListener("change", event => {
-  if (event.target.matches("input[name], #preserve, #toolbar-visible, #restore-position, #restore-size, #log-to-file")) saveSettings().catch(error => logUiError("settings-save-failed", error));
+  if (event.target.matches("input[name='draftRestore'], input[name='toolbarIcon'], #preserve, #toolbar-visible, #restore-position, #restore-size, #log-to-file")) saveSettings().catch(error => logUiError("settings-save-failed", error));
 });
 $("#log-file-path").addEventListener("change", () => saveSettings().catch(error => logUiError("log-path-save-failed", error)));
 $("#restore-selected").addEventListener("click", async () => {

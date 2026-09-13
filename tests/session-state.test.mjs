@@ -132,7 +132,6 @@ test("closing the last main window preserves entries, while reopening main retur
     mainWindowCount: 0,
     preserveOnMainClose: true,
     trackedEntryCount: 3,
-    browserConsoleOpen: false,
   });
   assert.equal(preserving, "PRESERVE_ON_EXIT");
   assert.equal(shouldPreserveComposeClose({
@@ -144,7 +143,6 @@ test("closing the last main window preserves entries, while reopening main retur
     mainWindowCount: 1,
     preserveOnMainClose: true,
     trackedEntryCount: 3,
-    browserConsoleOpen: false,
   });
   assert.equal(normal, "NORMAL");
   assert.equal(shouldPreserveComposeClose({

@@ -34,21 +34,6 @@
         "returns": { "type": "array", "items": { "type": "integer" } }
       },
       {
-        "name": "getBrowserConsole",
-        "type": "function",
-        "async": true,
-        "parameters": [],
-        "returns": {
-          "type": "object",
-          "properties": {
-            "open": { "type": "boolean" },
-            "left": { "type": "integer", "optional": true }, "top": { "type": "integer", "optional": true },
-            "width": { "type": "integer", "optional": true }, "height": { "type": "integer", "optional": true },
-            "state": { "type": "string", "optional": true }
-          }
-        }
-      },
-      {
         "name": "listOpenComposeDrafts",
         "type": "function",
         "async": true,
@@ -77,14 +62,6 @@
         "async": true,
         "parameters": [],
         "returns": { "type": "boolean" }
-      },
-      {
-        "name": "openBrowserConsole",
-        "type": "function",
-        "async": true,
-        "parameters": [{ "name": "geometry", "type": "object", "optional": true,
-          "properties": { "left": { "type": "integer", "optional": true }, "top": { "type": "integer", "optional": true }, "width": { "type": "integer", "optional": true }, "height": { "type": "integer", "optional": true }, "state": { "type": "string", "optional": true } }
-        }]
       },
       {
         "name": "appendLog",

@@ -57,10 +57,9 @@ export function nextSessionMode({
   mainWindowCount,
   preserveOnMainClose,
   trackedEntryCount,
-  browserConsoleOpen,
 }) {
   if (mainWindowCount > 0) return "NORMAL";
-  if (preserveOnMainClose && (trackedEntryCount > 0 || browserConsoleOpen)) {
+  if (preserveOnMainClose && trackedEntryCount > 0) {
     return "PRESERVE_ON_EXIT";
   }
   return mode;

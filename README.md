@@ -22,14 +22,16 @@ Every successful autosave or manual draft save updates session storage
 immediately. Opening an already-saved draft is also captured from Thunderbird's
 compose-state notification, without an arbitrary retry delay. Session membership
 is changed only by those lifecycle events: saved/opened, send, delete, normal
-close, and explicit Forget Session. The extension records the compose window's
-normal/maximized state, position, and size. During application quit or after
-the last main mail window closes, it preserves tracked compose windows so the
-ordinary shutdown sequence does not discard the session.
+close, and explicit Forget Session.
 
-Only window geometry and Browser Console visibility use periodic observation;
-they have no corresponding current WebExtension lifecycle event. Draft
-membership and shutdown mode do not depend on polling.
+The extension is entirely event-driven and performs no periodic polling. The
+compose window's normal/maximized state, position, and size are captured as a
+snapshot when a draft is saved or an already-saved draft is opened; there is no
+WebExtension lifecycle event for continuous window move/resize, so the stored
+geometry is the value at the last save rather than a live-tracked position.
+During application quit or after the last main mail window closes, it preserves
+tracked compose windows so the ordinary shutdown sequence does not discard the
+session.
 
 ## Close and discard behavior
 
@@ -57,9 +59,6 @@ Draft restoration at startup can be set to:
 - **Ask** — open a separate startup selection dialog, grouped in Thunderbird
   account order, with individual draft checkboxes.
 
-The Browser Console can be restored **Always**, **Never**, or **If it was
-open**. Reopen Drafts is the only Developer Tools window it manages.
-
 Settings include independent **Restore to previous position** and **Restore to
 previous size** controls, both enabled by default. The Reopen Drafts toolbar
 button is optional; when shown, it is a compact settings control only. It does
@@ -80,8 +79,7 @@ Manual testing on Thunderbird 153 under Arch Linux/Cinnamon has verified:
 - restored compose windows on a three-monitor Cinnamon layout, including a
   subsequent run with one monitor unavailable, where Thunderbird placed the
   affected draft on the primary monitor;
-- Browser Console restoration/geometry, extension disable/re-enable, and the
-  optional toolbar recovery dialog.
+- extension disable/re-enable and the optional toolbar recovery dialog.
 
 The automated suite tests lifecycle reducers, durable native-draft resolution,
 startup result handling, manifest packaging, settings controls, and virtual

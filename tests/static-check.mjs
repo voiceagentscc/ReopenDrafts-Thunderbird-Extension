@@ -25,7 +25,6 @@ for (const pattern of [
   /tabs\.onRemoved\.addListener/,
   /PRESERVE_ON_EXIT/,
   /headerMessageId/,
-  /browserConsoleRestore/,
   /draftRestore/,
   /openDurableDraft/,
   /startup-restore-begin/,
@@ -54,7 +53,6 @@ const implementation = await readFile("experiment/implementation.js", "utf8");
 assert.match(implementation, /messageManager\.get\(messageId\)/);
 assert.match(implementation, /Ci\.nsIMsgCompType\.Draft/);
 assert.match(implementation, /getMainWindowIds/);
-assert.match(implementation, /BrowserConsoleManager\.openBrowserConsoleOrFocus/);
 assert.match(implementation, /FileUtils\.openFileOutputStream/);
 assert.match(implementation, /listOpenComposeDrafts/);
 assert.match(implementation, /quit-application-granted/);
@@ -88,7 +86,6 @@ for (const family of ["beer", "window"]) {
 assert.doesNotMatch(background, /setBadgeText\(\{ text: model\.count/);
 assert.doesNotMatch(background, /messages\.query/);
 assert.doesNotMatch(background, /removeEntries\(entry => entry\.windowId === windowId/);
-assert.match(background, /Draft membership and main-window mode are event-driven/);
 const ask = await readFile("ask.html", "utf8");
 assert.match(ask, /Restore selected/);
 assert.match(ask, /Restore all/);

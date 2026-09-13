@@ -19,7 +19,6 @@ const STATE_KEY = "composeSessionState";
 const LEGACY_RECORD_KEY = "stage1Draft";
 const DEFAULT_LOG_FILE_PATH = "/tmp/reopen-drafts.log";
 const DEFAULT_SETTINGS = Object.freeze({
-  browserConsoleRestore: "never",
   draftRestore: "always",
   preserveOnMainClose: true,
   toolbarVisible: true,
@@ -45,7 +44,6 @@ const TOOLBAR_ICON_PATHS = Object.freeze({
 
 let state;
 let startupRestoreStarted = false;
-let observingCurrentSession = false;
 let mutationTail = Promise.resolve();
 
 function log(event, data = {}) {
@@ -74,7 +72,6 @@ function defaultState() {
     entries: [],
     deletedDraftIdentityKeys: [],
     deletedDraftTabIds: {},
-    browserConsole: { open: false, geometry: null },
   };
 }
 
@@ -99,10 +96,6 @@ function geometryFromWindow(window) {
     height: Number.isInteger(window.height) ? window.height : null,
     state: window.state === "maximized" ? "maximized" : "normal",
   };
-}
-
-function sameGeometry(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 async function loadState() {
@@ -145,11 +138,6 @@ async function loadState() {
   state.deletedDraftIdentityKeys = [...new Set(state.deletedDraftIdentityKeys)].filter(key =>
     Number.isInteger(state.deletedDraftTabIds[key])
   );
-  state.browserConsole = {
-    open: Boolean(state.browserConsole?.open),
-    geometry: state.browserConsole?.geometry ?? null,
-  };
-
   log("state-loaded", {
     entries: state.entries.length,
     hasLegacyStage1Draft: Boolean(stored[LEGACY_RECORD_KEY]),
@@ -302,29 +290,6 @@ async function shouldPreserveClosingWindow(reason) {
   return preserve;
 }
 
-async function updateComposeGeometry() {
-  await loadState();
-  let changed = false;
-  for (const entry of state.entries) {
-    if (!Number.isInteger(entry.tabId) || !Number.isInteger(entry.windowId)) continue;
-    try {
-      // Window IDs are recycled after Thunderbird restarts. In particular, an
-      // Ask dialog can inherit the ID that belonged to a prior compose window.
-      // Only sample geometry after proving this is still that live compose tab.
-      const tab = await browser.tabs.get(entry.tabId);
-      if (tab.type !== "messageCompose" || tab.windowId !== entry.windowId) continue;
-      const geometry = geometryFromWindow(await browser.windows.get(tab.windowId));
-      if (!sameGeometry(geometry, entry.geometry)) {
-        entry.geometry = geometry;
-        changed = true;
-      }
-    } catch (_error) {
-      // Closed windows are handled by tabs/windows removal events.
-    }
-  }
-  if (changed) await persist();
-}
-
 async function clearStaleComposeAssociations() {
   await loadState();
   let cleared = 0;
@@ -356,7 +321,6 @@ async function refreshSessionMode() {
     mainWindowCount: ids.length,
     preserveOnMainClose: state.settings.preserveOnMainClose,
     trackedEntryCount: state.entries.length,
-    browserConsoleOpen: state.browserConsole.open,
   });
   if (previous !== state.mode) {
     await persist();
@@ -373,23 +337,6 @@ async function applyToolbarVisibility() {
 async function applyToolbarIcon() {
   await loadState();
   await browser.action.setIcon({ path: TOOLBAR_ICON_PATHS[state.settings.toolbarIcon] ?? TOOLBAR_ICON_PATHS.beer });
-}
-
-async function updateBrowserConsoleState() {
-  await loadState();
-  const observed = await browser.existingDraft.getBrowserConsole();
-  if (observed.open) {
-    const geometry = geometryFromWindow(observed);
-    if (!state.browserConsole.open || !sameGeometry(state.browserConsole.geometry, geometry)) {
-      state.browserConsole = { open: true, geometry };
-      await persist();
-      log("browser-console-observed", { geometry });
-    }
-  } else if (observingCurrentSession && state.browserConsole.open && state.mode === "NORMAL") {
-    state.browserConsole = { open: false, geometry: null };
-    await persist();
-    log("browser-console-closed-normal");
-  }
 }
 
 async function applyComposeGeometry(tab, geometry) {
@@ -509,33 +456,6 @@ async function restoreEntries(keys = null) {
   await clearActionBadge();
 }
 
-async function restoreBrowserConsoleIfNeeded() {
-  await loadState();
-  const setting = state.settings.browserConsoleRestore;
-  if (setting === "never" || (setting === "if-open" && !state.browserConsole.open)) {
-    log("browser-console-restore-skipped", { setting, previouslyOpen: state.browserConsole.open });
-    return;
-  }
-  try {
-    const geometry = state.browserConsole.geometry && {
-      ...(state.settings.restorePosition ? {
-        left: state.browserConsole.geometry.left,
-        top: state.browserConsole.geometry.top,
-      } : {}),
-      ...(state.settings.restoreSize ? {
-        width: state.browserConsole.geometry.width,
-        height: state.browserConsole.geometry.height,
-        state: state.browserConsole.geometry.state,
-      } : {}),
-    };
-    log("browser-console-restore-attempt", { setting, geometry });
-    await browser.existingDraft.openBrowserConsole(geometry);
-    log("browser-console-restore-requested", { setting });
-  } catch (error) {
-    logError("browser-console-restore-failed", error, { setting });
-  }
-}
-
 async function clearActionBadge() {
   // The toolbar is settings-only. A draft count above its title is both
   // misleading and unnecessary because the full settings page shows details.
@@ -555,10 +475,7 @@ async function restoreAtStartup() {
     mode: state.mode,
     settings: state.settings,
     mainWindowIds: mainIds,
-    consolePreviouslyOpen: state.browserConsole.open,
   });
-  await updateBrowserConsoleState();
-  await restoreBrowserConsoleIfNeeded();
   if (state.settings.draftRestore === "always") {
     log("startup-draft-restore-always", { entries: state.entries.length });
     await restoreEntries();
@@ -580,16 +497,13 @@ async function restoreAtStartup() {
     log("startup-draft-restore-skipped", { setting: state.settings.draftRestore, entries: state.entries.length, mainWindows: mainIds.length });
   }
   await clearActionBadge();
-  observingCurrentSession = true;
 }
 
 async function setSettings(next, source = "settings") {
   await loadState();
   const previous = { ...state.settings };
-  const allowedConsole = new Set(["always", "never", "if-open"]);
   const allowedDrafts = new Set(["always", "never", "ask"]);
   const allowedToolbarIcons = new Set(["beer", "window"]);
-  if (next.browserConsoleRestore && !allowedConsole.has(next.browserConsoleRestore)) throw new Error("Invalid Browser Console setting");
   if (next.draftRestore && !allowedDrafts.has(next.draftRestore)) throw new Error("Invalid draft setting");
   if (next.toolbarIcon && !allowedToolbarIcons.has(next.toolbarIcon)) throw new Error("Invalid toolbar icon setting");
   if (next.logFilePath !== undefined && (typeof next.logFilePath !== "string" || !next.logFilePath.trim())) {
@@ -703,7 +617,6 @@ browser.tabs.onRemoved.addListener((tabId, removeInfo) => {
     });
     log("compose-close-event", { tabId, isWindowClosing: removeInfo.isWindowClosing, preserve, action });
     if (action === "remove") await removeEntries(entry => entry.tabId === tabId, "compose-closed-normal");
-    if (removeInfo.isWindowClosing) await updateComposeGeometry();
   }).catch(error => logError("compose-close-handling-failed", error, { tabId }));
 });
 browser.windows.onRemoved.addListener(windowId => {
@@ -711,7 +624,6 @@ browser.windows.onRemoved.addListener(windowId => {
     // Compose lifecycle is handled by tabs.onRemoved. Do not infer it from a
     // bare window ID: those IDs are recycled and can belong to Ask popups.
     await refreshSessionMode();
-    await updateBrowserConsoleState();
   }).catch(error => logError("window-close-handling-failed", error, { windowId }));
 });
 browser.windows.onCreated.addListener(() => enqueueMutation("window-created", () =>
@@ -735,7 +647,6 @@ browser.runtime.onMessage.addListener(message => enqueueMutation("runtime-messag
       return popupModel();
     case "forget-session":
       state.entries = [];
-      state.browserConsole = { open: false, geometry: null };
       await persist();
       await clearActionBadge();
       return popupModel();
@@ -750,23 +661,20 @@ browser.commands?.onCommand.addListener(command => {
   if (command === "forget-previous-compose-session") {
     enqueueMutation("forget-session", async () => {
       state.entries = [];
-      state.browserConsole = { open: false, geometry: null };
       await persist();
       await clearActionBadge();
     }).catch(error => logError("forget-session-failed", error));
   }
 });
 
-setInterval(() => {
-  enqueueMutation("state-poll", () =>
-    // Geometry and Browser Console visibility have no WebExtension lifecycle
-    // events. Draft membership and main-window mode are event-driven.
-    Promise.all([updateComposeGeometry(), updateBrowserConsoleState()])
-  ).catch(error => logError("state-poll-failed", error));
-}, 1000);
-
+// No periodic polling. Draft membership, main-window mode, and compose
+// geometry are all event-driven: geometry is captured when a draft is saved
+// (compose.onAfterSave) and when an already-saved draft is opened
+// (compose.onComposeStateChanged). There is no WebExtension lifecycle event
+// for continuous window move/resize, so the saved geometry is a snapshot at
+// the last save rather than a live-tracked value.
 enqueueMutation("background-initialization", async () => {
   await loadState();
   log("background-started", { logFilePath: state.settings.logFilePath });
-  return Promise.all([scanOpenComposeDrafts(), refreshSessionMode(), updateBrowserConsoleState(), clearActionBadge(), applyToolbarVisibility(), applyToolbarIcon()]);
+  return Promise.all([scanOpenComposeDrafts(), refreshSessionMode(), clearActionBadge(), applyToolbarVisibility(), applyToolbarIcon()]);
 }).catch(error => logError("background-initialization-failed", error));

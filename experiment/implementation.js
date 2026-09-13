@@ -130,10 +130,6 @@ this.existingDraft = class extends ExtensionCommon.ExtensionAPI {
           }
           return ids;
         },
-        async getBrowserConsole() {
-          const window = Services.wm.getMostRecentWindow("devtools:webconsole");
-          return window ? { open: true, ...toGeometry(window) } : { open: false };
-        },
         async listOpenComposeDrafts() {
           const drafts = [];
           const windows = Services.wm.getEnumerator("msgcompose");
@@ -168,28 +164,6 @@ this.existingDraft = class extends ExtensionCommon.ExtensionAPI {
         },
         async isApplicationQuitting() {
           return extensionApi.applicationQuitting;
-        },
-        async openBrowserConsole(geometry) {
-          let window = Services.wm.getMostRecentWindow("devtools:webconsole");
-          logger("browser-console-open-request", { alreadyOpen: Boolean(window), geometry });
-          if (!window) {
-            const { require } = ChromeUtils.importESModule("resource://devtools/shared/loader/Loader.sys.mjs");
-            const { BrowserConsoleManager } = require("devtools/client/webconsole/browser-console-manager");
-            const hud = await BrowserConsoleManager.openBrowserConsoleOrFocus();
-            window = hud.iframeWindow;
-          } else {
-            window.focus();
-          }
-          window.setTimeout(() => {
-            try {
-              logger("browser-console-geometry-apply-request", { geometry });
-              applyGeometry(window, geometry);
-              logger("browser-console-geometry-applied", { geometry, actual: toGeometry(window) });
-            } catch (error) {
-              console.error("[reopen-drafts] browser-console-geometry-failed", error);
-            }
-          }, 0);
-          logger("browser-console-opened");
         },
         async appendLog(path, line) {
           const file = new FileUtils.File(path);
