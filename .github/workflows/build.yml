@@ -76,7 +76,9 @@ jobs:
       - name: Align version with release tag
         run: |
           set -e
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          # Export so the node one-liner below can read it via process.env
+          # (a bare shell variable is not visible to child processes).
+          export TAG_VERSION="${GITHUB_REF_NAME#v}"
           PKG_VERSION="$(node -p "require('./package.json').version")"
           if [ "$TAG_VERSION" = "$PKG_VERSION" ]; then
             echo "Tag v${TAG_VERSION} matches package.json; nothing to do."
