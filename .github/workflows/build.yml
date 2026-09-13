@@ -95,7 +95,9 @@ jobs:
           git add package.json manifest.json
           git commit -m "Align version with release tag v${TAG_VERSION}"
           git tag -f "v${TAG_VERSION}"
-          git push origin "v${TAG_VERSION}"
+          # Force: the tag may already point at an earlier commit (e.g. after a
+          # re-tag), and a non-force push would be rejected.
+          git push --force origin "v${TAG_VERSION}"
 
       - name: Download XPI artifact
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
