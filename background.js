@@ -17,7 +17,10 @@ import {
 
 const STATE_KEY = "composeSessionState";
 const LEGACY_RECORD_KEY = "stage1Draft";
-const DEFAULT_LOG_FILE_PATH = "/tmp/reopen-drafts.log";
+// Fallback only. The effective default is resolved from Thunderbird's
+// platform-specific temporary directory at startup (see loadState), which is
+// correct on every OS; this constant is used if that lookup is unavailable.
+const DEFAULT_LOG_FILE_PATH = "reopen-drafts.log";
 const DEFAULT_SETTINGS = Object.freeze({
   draftRestore: "always",
   preserveOnMainClose: true,
@@ -46,6 +49,7 @@ let state;
 let startupRestoreStarted = false;
 let mutationTail = Promise.resolve();
 
+let logFileWriteFailed = false;
 function log(event, data = {}) {
   // Diagnostics deliberately omit message content, recipients, and attachments.
   const prefix = `[reopen-drafts] ${event}`;
@@ -53,9 +57,14 @@ function log(event, data = {}) {
   const line = `${new Date().toISOString()} ${prefix} ${JSON.stringify(data)}\n`;
   if (state?.settings?.logToFile !== false) {
     const path = state?.settings?.logFilePath || DEFAULT_LOG_FILE_PATH;
-    browser.existingDraft.appendLog(path, line).catch(error =>
-      console.error("[reopen-drafts] log-file-write-failed", { path, message: error.message })
-    );
+    browser.existingDraft.appendLog(path, line).catch(error => {
+      // Surface the first failure loudly; subsequent failures are noted once so
+      // a bad path does not turn into a per-event console storm.
+      if (!logFileWriteFailed) {
+        logFileWriteFailed = true;
+        console.error("[reopen-drafts] log-file-write-failed — diagnostic file logging is disabled for this session", { path, message: error.message });
+      }
+    });
   }
 }
 
@@ -103,12 +112,13 @@ async function loadState() {
   const stored = await browser.storage.local.get([STATE_KEY, LEGACY_RECORD_KEY]);
   state = { ...defaultState(), ...(stored[STATE_KEY] ?? {}) };
   state.settings = { ...DEFAULT_SETTINGS, ...(state.settings ?? {}) };
-  // Use Thunderbird's platform-specific temporary directory for a new
-  // installation. An explicitly saved path is never replaced.
-  if (!stored[STATE_KEY]?.settings?.logFilePath) {
-    state.settings.logFilePath = await browser.existingDraft.getDefaultLogFilePath()
-      .catch(() => DEFAULT_LOG_FILE_PATH);
-  }
+  // Always resolve the log path from Thunderbird's platform-specific temporary
+  // directory. A path saved by an earlier version (or on another OS) is not
+  // trusted: it may be relative or point at a location that no longer exists,
+  // which would silently disable file logging. Re-deriving it here is cheap and
+  // makes the default correct on every OS.
+  state.settings.logFilePath = await browser.existingDraft.getDefaultLogFilePath()
+    .catch(() => DEFAULT_LOG_FILE_PATH);
   // Version 2 introduced Ask as its implicit default. Upgrade it to the new
   // Always default so an existing test installation does not stay silently idle.
   if ((state.version ?? 0) < 3 && state.settings.draftRestore === "ask") {

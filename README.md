@@ -86,29 +86,51 @@ startup result handling, manifest packaging, settings controls, and virtual
 desktop geometry requests. It cannot emulate a real multi-monitor compositor;
 that behavior is covered by the manual tests above.
 
+## Versioning
+
+`package.json` is the single source of truth for the version. `manifest.json`
+is checked in so a freshly checked-out tree can be loaded directly as an unpacked
+add-on, and a git `pre-commit` hook keeps its `version` field in lockstep with
+`package.json` on every commit. Install the hook once per clone:
+
+```bash
+npm run setup
+```
+
+Continuous integration applies the same synchronization as a backstop and warns
+if a checked-in `manifest.json` was out of sync (for example, when a commit was
+made with the hook bypassed). When a release tag is pushed, the workflow
+aligns `package.json` to the tag's version, re-syncs the manifest, commits the
+correction, and moves the tag onto that commit — so a tag always covers a tree
+whose version matches it.
+
 ## Development and installation
 
 ```bash
+npm run setup      # once per clone: install the version-sync git hook
 npm run check
 npm run package
 npm run audit:public
 ```
 
-This produces `dist/reopen-drafts.xpi`. Install it temporarily through
-Thunderbird's Add-ons Manager. The manifest supports Thunderbird 153.0 and newer.
-Because the Experiment uses Thunderbird internals, test draft restoration on
-each new major Thunderbird release.
+`npm run package` produces `dist/reopen-drafts.xpi`. Install it through
+Thunderbird's Add-ons Manager, or load the unpacked tree directly (the checked-in
+`manifest.json` makes this work without a build step). The manifest supports
+Thunderbird 153.0 and newer. Because the Experiment uses Thunderbird internals,
+test draft restoration on each new major Thunderbird release.
 
 The small privileged Experiment is required because standard WebExtension APIs
-cannot open an existing message in Thunderbird's native editable Draft mode or
-control the privileged Browser Console.
+cannot open an existing message in Thunderbird's native editable Draft mode.
 
-For development, use the Browser Console or the diagnostic log. Every
-extension diagnostic is prefixed with `[reopen-drafts]` and is appended to
-Thunderbird's platform temporary directory as `reopen-drafts.log` by default.
-Change the absolute log-file path or disable file logging in the full settings
-page. The privileged Experiment performs the append because ordinary
-WebExtensions cannot write arbitrary local files.
+For development, use the diagnostic log. Every extension diagnostic is prefixed
+with `[reopen-drafts]` and is appended to `reopen-drafts.log` in Thunderbird's
+platform temporary directory by default — the path is resolved from that
+directory at startup, so it is correct on every operating system. Disable file
+logging in the full settings page if you prefer console-only diagnostics. The
+privileged Experiment performs the append because ordinary WebExtensions cannot
+write arbitrary local files. If a write fails (for example, an unwritable path),
+the extension logs the failure once and continues with console-only logging
+rather than failing silently.
 
 The log is local only and is never uploaded by the extension. It includes
 state transitions, settings, window geometry, and Thunderbird account/folder

@@ -1,0 +1,21 @@
+#!/bin/sh
+# Keep manifest.json's version in lockstep with package.json on every commit.
+#
+# package.json is the single source of truth for the version. This hook rewrites
+# only the "version" field of manifest.json to match, and stages that change so it
+# is part of the commit. The rewrite is idempotent, so when the files already
+# agree this is a no-op.
+#
+# Install with:  npm run setup
+# (which sets core.hooksPath to this directory). CI applies the same sync as a
+# backstop in case a commit was made with the hook bypassed.
+
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+node scripts/sync-manifest-version.mjs
+
+# Fold the corrected manifest into this commit when it changed.
+if git diff --name-only | grep -q '^manifest\.json$'; then
+  git add manifest.json
+fi
