@@ -24,11 +24,19 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check manifest version
-        run: npm run sync-version -- --check
-
       - name: Validate extension
         run: npm run check
+
+      # Backstop for the pre-commit hook: re-sync manifest.json to package.json
+      # and warn (but do not fail) if the checked-in manifest was stale, e.g.
+      # because a commit was made with the hook bypassed. The package step below
+      # always zips a manifest that matches package.json.
+      - name: Sync manifest version (backstop)
+        run: |
+          if ! npm run sync-version -- --check; then
+            echo "::warning::Checked-in manifest.json was out of sync with package.json; re-synced it for this build. Run 'npm run setup' locally so the pre-commit hook keeps them in lockstep."
+            npm run sync-version
+          fi
 
       - name: Package extension
         run: npm run package
@@ -61,18 +69,49 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check release tag version
+      # The release tag is the single source of truth for a release's version.
+      # If it disagrees with package.json, correct package.json (and the derived
+      # manifest.json), commit the correction, and move the tag onto that commit
+      # so the tag always covers a tree whose version matches it.
+      - name: Align version with release tag
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          set -e
+          # Export so the node one-liner below can read it via process.env
+          # (a bare shell variable is not visible to child processes).
+          export TAG_VERSION="${GITHUB_REF_NAME#v}"
           PKG_VERSION="$(node -p "require('./package.json').version")"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Tag v${TAG_VERSION} does not match package.json version ${PKG_VERSION}."
-            exit 1
+          if [ "$TAG_VERSION" = "$PKG_VERSION" ]; then
+            echo "Tag v${TAG_VERSION} matches package.json; nothing to do."
+            exit 0
           fi
-          npm run sync-version -- --check
+          echo "Tag v${TAG_VERSION} != package.json ${PKG_VERSION}; aligning package.json to the tag."
+          # Surgical single-line edit so the rest of package.json is untouched.
+          # The shell string is single-quoted, so bash passes the JS verbatim:
+          # no \" escapes for YAML to strip, no bare " to break quoting, and
+          # $1 stays a literal regex backreference. The JSON quotes around the
+          # new version are built at runtime with String.fromCharCode(34).
+          node -e 'const f="package.json";const fs=require("fs");const q=String.fromCharCode(34);fs.writeFileSync(f,fs.readFileSync(f,"utf8").replace(/("version":\s*)"[^"]+"/,"$1"+q+process.env.TAG_VERSION+q))'
+          npm run sync-version
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json manifest.json
+          git commit -m "Align version with release tag v${TAG_VERSION}"
+          git tag -f "v${TAG_VERSION}"
+          # Force: the tag may already point at an earlier commit (e.g. after a
+          # re-tag), and a non-force push would be rejected.
+          git push --force origin "v${TAG_VERSION}"
 
-      - name: Package release XPI
-        run: npm run package
+      # The alignment step above rewrote package.json and manifest.json to the
+      # tag's version and committed that. The working tree now carries the
+      # correct version, so build the XPI directly from it — no need to
+      # download (and risk clobbering with a stale) artifact from the build
+      # job, which packaged the tag's original, pre-alignment commit.
+      - name: Package XPI with aligned version
+        run: |
+          set -e
+          echo "Syncing manifest.json and packaging so the XPI carries version ${GITHUB_REF_NAME#v}."
+          npm run sync-version
+          npm run package
 
       - name: Generate SHA256 checksum
         run: |

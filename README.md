@@ -97,10 +97,12 @@ add-on, and a git `pre-commit` hook keeps its `version` field in lockstep with
 npm run setup
 ```
 
-Continuous integration checks that the checked-in `manifest.json` matches
-`package.json`. For a release, update `package.json`, run `npm run sync-version`,
-commit both files, and tag that commit. The release workflow checks that the
-tag matches `package.json` before packaging the XPI.
+Continuous integration applies the same synchronization as a backstop and warns
+if a checked-in `manifest.json` was out of sync (for example, when a commit was
+made with the hook bypassed). When a release tag is pushed, the workflow
+aligns `package.json` to the tag's version, re-syncs the manifest, commits the
+correction, and moves the tag onto that commit — so a tag always covers a tree
+whose version matches it.
 
 ## Development and installation
 
