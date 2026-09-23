@@ -95,7 +95,10 @@ npm run audit:public
 ```
 
 This produces `dist/reopen-drafts.xpi`. Install it temporarily through
-Thunderbird's Add-ons Manager. The current manifest targets Thunderbird 153.0.
+Thunderbird's Add-ons Manager. The manifest supports Thunderbird 153.0 and newer.
+Because the Experiment uses Thunderbird internals, test draft restoration on
+each new major Thunderbird release.
+
 The small privileged Experiment is required because standard WebExtension APIs
 cannot open an existing message in Thunderbird's native editable Draft mode or
 control the privileged Browser Console.

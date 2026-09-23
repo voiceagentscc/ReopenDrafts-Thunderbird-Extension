@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
+const packageJson = JSON.parse(await readFile("package.json", "utf8"));
 assert.equal(manifest.manifest_version, 3);
+assert.equal(manifest.version, packageJson.version);
 assert.equal(manifest.browser_specific_settings.gecko.strict_min_version, "153.0");
+assert.equal(manifest.browser_specific_settings.gecko.strict_max_version, undefined);
 assert.equal(manifest.default_locale, "en");
 assert.equal(manifest.name, "__MSG_extensionName__");
 assert.ok(manifest.action?.default_popup);
